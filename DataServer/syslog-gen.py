@@ -39,7 +39,7 @@ def main():
 
         syslog.syslog(rand_data)
         print(rand_data)
-        sleep(1)
+        sleep(20)
 
 if __name__ == '__main__':
     try:

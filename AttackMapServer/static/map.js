@@ -4,16 +4,23 @@
 // - AttackMapServer machine:
 //   - Internal IP: 127.0.0.1
 //   - External IP: 192.168.11.106
-var webSock = new WebSocket("ws:/127.0.0.1:8888/websocket"); // Internal
-//var webSock = new WebSocket("ws:/192.168.1.100:8888/websocket"); // External
+// var webSock = new WebSocket("ws:/127.0.0.1:8888/websocket"); // Internal
+var webSock = new WebSocket("ws:/192.168.56.101:8888/websocket"); // External
 
 // link map
 
+/*
 L.mapbox.accessToken = "pk.eyJ1IjoibW1heTYwMSIsImEiOiJjaWgyYWU3NWQweWx2d3ltMDl4eGk5eWY1In0.9YoOkALPP7zaoim34ZITxw";
 var map = L.mapbox.map("map", "mapbox.dark", {
 center: [0, 0], // lat, long
 zoom: 2
 });
+*/
+
+L.mapbox.accessToken = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA";
+var map = L.mapbox.map('map')
+.setView([0, 0], 2)
+.addLayer(L.mapbox.styleLayer('mapbox://styles/mapbox/dark-v10'));
 
 // add full screen option
 L.control.fullscreen().addTo(map);

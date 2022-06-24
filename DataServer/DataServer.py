@@ -29,7 +29,7 @@ redis_ip = '127.0.0.1'
 redis_instance = None
 
 # required input paths
-syslog_path = '/var/log/syslog'
+syslog_path = '/var/log/messages'
 #syslog_path = '/var/log/reverse-proxy.log'
 db_path = '../DataServerDB/GeoLite2-City.mmdb'
 

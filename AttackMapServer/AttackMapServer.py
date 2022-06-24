@@ -238,7 +238,7 @@ def main():
     handlers = [
                 (r'/websocket', WebSocketChatHandler),
                 (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': 'static'}),
-                (r'/flags/(.*)', tornado.web.StaticFileHandler, {'path': 'static/flags'}),
+                (r'/flags/(.*)', tornado.web.StaticFileHandler, {'path': 'flags'}),
                 (r'/', IndexHandler)
                 ]
     
