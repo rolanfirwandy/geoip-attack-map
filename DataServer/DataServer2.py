@@ -12,9 +12,13 @@ from os import getuid
 from sys import exit
 from time import gmtime, localtime, sleep, strftime
 from urllib.request import urlopen
+from pymongo import MongoClient
 
 redis_ip = '127.0.0.1'
 redis_instance = None
+
+mongo_url = 'mongodb://log_admin:password@localhost:27017/'
+db = None
 
 # required input paths
 syslog_path = '/var/log/messages'
@@ -50,6 +54,11 @@ def clean_db(unclean):
 def connect_redis(redis_ip):
     r = redis.StrictRedis(host=redis_ip, port=6379, db=0)
     return r
+
+def connect_mongo(mongo_url):
+    client = MongoClient(mongo_url)
+    d = client['bindb'].geoipdb
+    return d
 
 def get_msg_type():
     # @TODO
@@ -163,10 +172,9 @@ def track_stats(super_dict, tracking_dict, key):
             unknowns[key] = 1
 
 def find_dst_lat_long(hq_ip):
-    hq_ip_db_unclean = parse_maxminddb(db_path, hq_ip)
+    hq_ip_db_unclean = db.find_one({"ip": hq_ip})
     if hq_ip_db_unclean:
-        print('get dst data from mmdb')
-        hq_ip_db_clean = clean_db(hq_ip_db_unclean)
+        print('get dst data from mongo')
         dst_lat = hq_ip_db_clean['latitude']
         dst_long = hq_ip_db_clean['longitude']
         hq_dict = {
@@ -176,18 +184,19 @@ def find_dst_lat_long(hq_ip):
         return hq_dict
     else:
         print('get dst data from api')
-        resp_src = urlopen('https://ipwho.is/' + hq_ip)
-        json_src = json.load(resp_src)
-        if (json_src['success']):
-            dst_lat = str(json_src['latitude'])
-            dst_long = str(json_src['longitude'])
+        resp_dst = urlopen('https://ipwho.is/' + hq_ip)
+        json_dst = json.load(resp_dst)
+        if (json_dst['success']):
+            # TODO: save to mongodb
+            dst_lat = str(json_dst['latitude'])
+            dst_long = str(json_dst['longitude'])
             hq_dict = {
                     'dst_lat': dst_lat,
                     'dst_long': dst_long
                     }
             return hq_dict
         else:
-            print(json_src['message'])
+            print(json_dst['message'])
 
 def main():
     if getuid() != 0:
@@ -195,13 +204,16 @@ def main():
         print('SHUTTING DOWN')
         exit()
 
-    global db_path, log_file_out, redis_ip, redis_instance, syslog_path, hq_ip
+    global db_path, log_file_out, redis_ip, redis_instance, syslog_path, hq_ip, db
     global continents_tracked, countries_tracked, ips_tracked, postal_codes_tracked, event_count, unknown, ip_to_code, country_to_code
 
     #args = menu()
 
     # Connect to Redis
     redis_instance = connect_redis(redis_ip)
+
+    # Connect to MongoDB
+    db = connect_mongo(mongo_url)
 
     # Follow/parse/format/publish syslog data
     with io.open(syslog_path, "r", encoding='ISO-8859-1') as syslog_file:
@@ -215,30 +227,39 @@ def main():
             else:
                 syslog_data_dict = parse_syslog(line)
                 if syslog_data_dict:
-                    ip_db_unclean = parse_maxminddb(db_path, syslog_data_dict['src_ip'])
+                    ip_db_unclean = db.find_one({"ip": syslog_data_dict['src_ip']})
                     hq_dict = find_dst_lat_long(syslog_data_dict['dst_ip'])
 
                     if ip_db_unclean:
-                        print('get geo data from mmdb')
+                        print('get src data from mongo')
                         event_count += 1
-                        ip_db_clean = clean_db(ip_db_unclean)
+                        ip_db_clean = {'city', ip_db_unclean['city']}
+                        ip_db_clean['continent'] = ip_db_unclean['continent']
+                        ip_db_clean['continent_code'] = ip_db_unclean['continent_code']
+                        ip_db_clean['country'] = ip_db_unclean['country']
+                        ip_db_clean['iso_code'] = ip_db_unclean['country_code']
+                        ip_db_clean['latitude'] = ip_db_unclean['latitude']
+                        ip_db_clean['longitude'] = ip_db_unclean['longitude']
+                        ip_db_clean['metro_code'] = ip_db_unclean['calling_code']
+                        ip_db_clean['postal_code'] = ip_db_unclean['postal']
                     else:
-                        print('get geo data from api')
+                        print('get src data from api')
                         event_count += 1
-                        resp_dst = urlopen('https://ipwho.is/' + syslog_data_dict['src_ip'])
-                        json_dst = json.load(resp_dst)
-                        if (json_dst['success']):
-                            ip_db_clean = {'city', json_dst['city']}
-                            ip_db_clean['continent'] = json_dst['continent']
-                            ip_db_clean['continent_code'] = json_dst['continent_code']
-                            ip_db_clean['country'] = json_dst['country']
-                            ip_db_clean['iso_code'] = json_dst['country_code']
-                            ip_db_clean['latitude'] = json_dst['latitude']
-                            ip_db_clean['longitude'] = json_dst['longitude']
-                            ip_db_clean['metro_code'] = json_dst['calling_code']
-                            ip_db_clean['postal_code'] = json_dst['postal']
+                        resp_src = urlopen('https://ipwho.is/' + syslog_data_dict['src_ip'])
+                        json_src = json.load(resp_src)
+                        if (json_src['success']):
+                            # TODO: save to mongodb
+                            ip_db_clean = {'city', json_src['city']}
+                            ip_db_clean['continent'] = json_src['continent']
+                            ip_db_clean['continent_code'] = json_src['continent_code']
+                            ip_db_clean['country'] = json_src['country']
+                            ip_db_clean['iso_code'] = json_src['country_code']
+                            ip_db_clean['latitude'] = json_src['latitude']
+                            ip_db_clean['longitude'] = json_src['longitude']
+                            ip_db_clean['metro_code'] = json_src['calling_code']
+                            ip_db_clean['postal_code'] = json_src['postal']
                         else:
-                            print(json_dst['message'])
+                            print(json_src['message'])
 
                     msg_type = {'msg_type': get_msg_type()}
                     msg_type2 = {'msg_type2': syslog_data_dict['type_attack']}
