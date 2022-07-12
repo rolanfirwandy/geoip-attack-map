@@ -17,10 +17,20 @@ zoom: 2
 });
 */
 
-L.mapbox.accessToken = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA";
+L.mapbox.accessToken = "pk.eyJ1Ijoicm9sYW5maXJ3YW5keSIsImEiOiJjbDVobXd0M3UwYWg1M2Z0ZThqMmlncHljIn0.1enfe2Z8qE9WoTGVeRMqLA";
 var map = L.mapbox.map('map')
 .setView([0, 0], 2)
 .addLayer(L.mapbox.styleLayer('mapbox://styles/mapbox/dark-v10'));
+
+/*
+mapboxgl.accessToken = 'pk.eyJ1Ijoicm9sYW5maXJ3YW5keSIsImEiOiJjbDVobXd0M3UwYWg1M2Z0ZThqMmlncHljIn0.1enfe2Z8qE9WoTGVeRMqLA';
+var map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/dark-v10',
+  center: [0, 0],
+  zoom: 2
+});
+*/
 
 // add full screen option
 L.control.fullscreen().addTo(map);
@@ -29,11 +39,13 @@ L.control.fullscreen().addTo(map);
 var hqLatLng = new L.LatLng(37.3845, -122.0881);
 
 // hq marker
+/*
 L.circle(hqLatLng, 110000, {
 color: 'red',
 fillColor: 'yellow',
 fillOpacity: 0.5,
 }).addTo(map);
+*/
 
 // Append <svg> to map
 var svg = d3.select(map.getPanes().overlayPane).append("svg")
@@ -464,12 +476,15 @@ webSock.onmessage = function (e) {
         switch(msg.type) {
         case "Traffic":
             console.log("Traffic!");
+            var dstLatLng = new L.LatLng(msg.dst_lat, msg.dst_long);
             var srcLatLng = new L.LatLng(msg.src_lat, msg.src_long);
-            var hqPoint = map.latLngToLayerPoint(hqLatLng);
+            var hqPoint = map.latLngToLayerPoint(dstLatLng);
             var srcPoint = map.latLngToLayerPoint(srcLatLng);
             console.log('');
             addCircle(msg, srcLatLng);
+            addCircle(msg, dstLatLng);
             handleParticle(msg, srcPoint);
+            handleParticle(msg, hqPoint);
             handleTraffic(msg, srcPoint, hqPoint, srcLatLng);
             handleLegend(msg);
             handleLegendType(msg)
