@@ -17,8 +17,11 @@ from pymongo import MongoClient
 redis_ip = '127.0.0.1'
 redis_instance = None
 
-mongo_url = 'mongodb://log_admin:password@localhost:27017/'
+# mongo_url = 'mongodb://log_admin:password@localhost:27017/'
+mongo_url = 'mongodb://log_admin:password@192.168.18.25:27017/'
 db = None
+
+geoip_url = 'http://ip-api.com/json/'
 
 # required input paths
 syslog_path = '/var/log/messages'
@@ -172,11 +175,11 @@ def track_stats(super_dict, tracking_dict, key):
             unknowns[key] = 1
 
 def find_dst_lat_long(hq_ip):
-    hq_ip_db_unclean = db.find_one({"ip": hq_ip})
-    if hq_ip_db_unclean:
+    hq_ip_db_clean = db.find_one({"query": hq_ip})
+    if hq_ip_db_clean:
         print('get dst data from mongo')
-        dst_lat = hq_ip_db_clean['latitude']
-        dst_long = hq_ip_db_clean['longitude']
+        dst_lat = hq_ip_db_clean['lat']
+        dst_long = hq_ip_db_clean['lon']
         hq_dict = {
                 'dst_lat': dst_lat,
                 'dst_long': dst_long
@@ -184,12 +187,12 @@ def find_dst_lat_long(hq_ip):
         return hq_dict
     else:
         print('get dst data from api')
-        resp_dst = urlopen('https://ipwho.is/' + hq_ip)
+        resp_dst = urlopen(geoip_url + hq_ip)
         json_dst = json.load(resp_dst)
-        if (json_dst['success']):
-            # TODO: save to mongodb
-            dst_lat = str(json_dst['latitude'])
-            dst_long = str(json_dst['longitude'])
+        if (json_dst['status'] == 'success'):
+            db.insert_one(json_dst)
+            dst_lat = str(json_dst['lat'])
+            dst_long = str(json_dst['lon'])
             hq_dict = {
                     'dst_lat': dst_lat,
                     'dst_long': dst_long
@@ -197,6 +200,11 @@ def find_dst_lat_long(hq_ip):
             return hq_dict
         else:
             print(json_dst['message'])
+            hq_dict = {
+                    'dst_lat': -6.17,
+                    'dst_long': 106.8
+                    }
+            return hq_dict
 
 def main():
     if getuid() != 0:
@@ -227,38 +235,50 @@ def main():
             else:
                 syslog_data_dict = parse_syslog(line)
                 if syslog_data_dict:
-                    ip_db_unclean = db.find_one({"ip": syslog_data_dict['src_ip']})
+                    ip_db_unclean = db.find_one({"query": syslog_data_dict['src_ip']})
                     hq_dict = find_dst_lat_long(syslog_data_dict['dst_ip'])
 
                     if ip_db_unclean:
                         print('get src data from mongo')
                         event_count += 1
-                        ip_db_clean = {'city', ip_db_unclean['city']}
-                        ip_db_clean['continent'] = ip_db_unclean['continent']
-                        ip_db_clean['continent_code'] = ip_db_unclean['continent_code']
-                        ip_db_clean['country'] = ip_db_unclean['country']
-                        ip_db_clean['iso_code'] = ip_db_unclean['country_code']
-                        ip_db_clean['latitude'] = ip_db_unclean['latitude']
-                        ip_db_clean['longitude'] = ip_db_unclean['longitude']
-                        ip_db_clean['metro_code'] = ip_db_unclean['calling_code']
-                        ip_db_clean['postal_code'] = ip_db_unclean['postal']
+                        ip_db_clean = {'city': ip_db_unclean['city'],
+                                    'continent': ip_db_unclean['regionName'],
+                                    'continent_code': ip_db_unclean['region'],
+                                    'country': ip_db_unclean['country'],
+                                    'iso_code': ip_db_unclean['countryCode'],
+                                    'latitude': ip_db_unclean['lat'],
+                                    'longitude': ip_db_unclean['lon'],
+                                    'metro_code': 0,
+                                    'postal_code': ip_db_unclean['zip']
+                                    }
                     else:
                         print('get src data from api')
                         event_count += 1
-                        resp_src = urlopen('https://ipwho.is/' + syslog_data_dict['src_ip'])
+                        resp_src = urlopen(geoip_url + syslog_data_dict['src_ip'])
                         json_src = json.load(resp_src)
-                        if (json_src['success']):
-                            # TODO: save to mongodb
-                            ip_db_clean = {'city', json_src['city']}
-                            ip_db_clean['continent'] = json_src['continent']
-                            ip_db_clean['continent_code'] = json_src['continent_code']
-                            ip_db_clean['country'] = json_src['country']
-                            ip_db_clean['iso_code'] = json_src['country_code']
-                            ip_db_clean['latitude'] = json_src['latitude']
-                            ip_db_clean['longitude'] = json_src['longitude']
-                            ip_db_clean['metro_code'] = json_src['calling_code']
-                            ip_db_clean['postal_code'] = json_src['postal']
+                        if (json_src['status'] == 'success'):
+                            db.insert_one(json_src)
+                            ip_db_clean = {'city': json_src['city'],
+                                        'continent': json_src['regionName'],
+                                        'continent_code': json_src['region'],
+                                        'country': json_src['country'],
+                                        'iso_code': json_src['countryCode'],
+                                        'latitude': json_src['lat'],
+                                        'longitude': json_src['lon'],
+                                        'metro_code': 0,
+                                        'postal_code': json_src['zip']
+                                        }
                         else:
+                            ip_db_clean = {'city': 'Jakarta',
+                                        'continent': 'Asia',
+                                        'continent_code': 'AS',
+                                        'country': 'Indonesia',
+                                        'iso_code': 'ID',
+                                        'latitude': -6.17,
+                                        'longitude': 106.8,
+                                        'metro_code': 0,
+                                        'postal_code': ""
+                                        }
                             print(json_src['message'])
 
                     msg_type = {'msg_type': get_msg_type()}
