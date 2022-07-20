@@ -230,7 +230,6 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
                         'ip_to_code': ip_to_code,
                         }
 
-
         self.write_message(json.dumps(msg_to_send))
 
 def main():

@@ -19,7 +19,7 @@ zoom: 2
 
 L.mapbox.accessToken = "pk.eyJ1Ijoicm9sYW5maXJ3YW5keSIsImEiOiJjbDVobXd0M3UwYWg1M2Z0ZThqMmlncHljIn0.1enfe2Z8qE9WoTGVeRMqLA";
 var map = L.mapbox.map('map')
-.setView([0, 0], 2)
+.setView([38, 0], 2)
 .addLayer(L.mapbox.styleLayer('mapbox://styles/mapbox/dark-v10'));
 
 /*
