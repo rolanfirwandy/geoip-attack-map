@@ -19,8 +19,8 @@ zoom: 2
 
 L.mapbox.accessToken = "pk.eyJ1Ijoicm9sYW5maXJ3YW5keSIsImEiOiJjbDVobXd0M3UwYWg1M2Z0ZThqMmlncHljIn0.1enfe2Z8qE9WoTGVeRMqLA";
 var map = L.mapbox.map('map')
-.setView([38, 0], 2)
-.addLayer(L.mapbox.styleLayer('mapbox://styles/mapbox/dark-v10'));
+.setView([0, 0], 2)
+.addLayer(L.mapbox.styleLayer('mapbox://styles/rolanfirwandy/cl5te1rwu001414p6b23wf3i4'));
 
 /*
 mapboxgl.accessToken = 'pk.eyJ1Ijoicm9sYW5maXJ3YW5keSIsImEiOiJjbDVobXd0M3UwYWg1M2Z0ZThqMmlncHljIn0.1enfe2Z8qE9WoTGVeRMqLA';
