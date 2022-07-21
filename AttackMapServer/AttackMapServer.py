@@ -38,13 +38,6 @@ service_rgb = {
                 'OTHER':'#6600cc'
                 }
 
-
-class IndexHandler(tornado.web.RequestHandler):
-    @tornado.web.asynchronous
-    def get(request):
-        request.render('index.html')
-
-
 class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
     def __init__(self, *args, **kwargs):
         super(WebSocketChatHandler, self).__init__(*args,**kwargs)
@@ -201,7 +194,7 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
 
         msg_to_send = {
                         'type': msg_type,
-                        'type2': msg_type2, 
+                        'type2': msg_type2,
                         'type3': msg_type3,
                         'protocol': protocol,
                         'src_ip': src_ip,
@@ -232,15 +225,35 @@ class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
 
         self.write_message(json.dumps(msg_to_send))
 
+class IndexHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    def get(request):
+        request.render('index.html')
+
+class IndexClearHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    def get(request):
+        request.render('index-clear.html')
+
+class IndexHalfHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    def get(request):
+        request.render('index-half.html')
+
 def main():
     # Register handler pages
     handlers = [
                 (r'/websocket', WebSocketChatHandler),
                 (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': 'static'}),
                 (r'/flags/(.*)', tornado.web.StaticFileHandler, {'path': 'flags'}),
-                (r'/', IndexHandler)
+                (r'/(favicon.ico)', tornado.web.StaticFileHandler, {'path': ''}),
+                (r'/', IndexHandler),
+                (r'/light', IndexClearHandler),
+                (r'/dark', IndexClearHandler),
+                (r'/mon-light', IndexHalfHandler),
+                (r'/mon-dark', IndexHalfHandler)
                 ]
-    
+
     # Define the static path
     #static_path = path.join( path.dirname(__file__), 'static' )
 

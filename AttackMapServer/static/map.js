@@ -18,9 +18,32 @@ zoom: 2
 */
 
 L.mapbox.accessToken = "pk.eyJ1Ijoicm9sYW5maXJ3YW5keSIsImEiOiJjbDVobXd0M3UwYWg1M2Z0ZThqMmlncHljIn0.1enfe2Z8qE9WoTGVeRMqLA";
-var map = L.mapbox.map('map')
-.setView([0, 0], 2)
-.addLayer(L.mapbox.styleLayer('mapbox://styles/rolanfirwandy/cl5te1rwu001414p6b23wf3i4'));
+var map;
+if (window.location.pathname == "/light") {
+    map = L.mapbox.map('map')
+    .setView([0, 0], 2)
+    .addLayer(L.mapbox.styleLayer('mapbox://styles/rolanfirwandy/cl5te1rwu001414p6b23wf3i4'));
+}
+else if (window.location.pathname == "/dark") {
+    map = L.mapbox.map('map')
+    .setView([0, 0], 2)
+    .addLayer(L.mapbox.styleLayer('mapbox://styles/rolanfirwandy/cl5tef8je000i14mtqi3ax0dj'));
+}
+if (window.location.pathname == "/mon-light") {
+    map = L.mapbox.map('map')
+    .setView([0, 0], 2)
+    .addLayer(L.mapbox.styleLayer('mapbox://styles/rolanfirwandy/cl5te1rwu001414p6b23wf3i4'));
+}
+else if (window.location.pathname == "/mon-dark") {
+    map = L.mapbox.map('map')
+    .setView([0, 0], 2)
+    .addLayer(L.mapbox.styleLayer('mapbox://styles/rolanfirwandy/cl5tef8je000i14mtqi3ax0dj'));
+}
+else {
+    map = L.mapbox.map('map')
+    .setView([0, 0], 2)
+    .addLayer(L.mapbox.styleLayer('mapbox://styles/mapbox/dark-v10'));
+}
 
 /*
 mapboxgl.accessToken = 'pk.eyJ1Ijoicm9sYW5maXJ3YW5keSIsImEiOiJjbDVobXd0M3UwYWg1M2Z0ZThqMmlncHljIn0.1enfe2Z8qE9WoTGVeRMqLA';
