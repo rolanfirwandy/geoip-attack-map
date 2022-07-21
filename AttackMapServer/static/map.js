@@ -29,7 +29,7 @@ else if (window.location.pathname == "/dark") {
     .setView([0, 0], 2)
     .addLayer(L.mapbox.styleLayer('mapbox://styles/rolanfirwandy/cl5tef8je000i14mtqi3ax0dj'));
 }
-if (window.location.pathname == "/mon-light") {
+else if (window.location.pathname == "/mon-light") {
     map = L.mapbox.map('map')
     .setView([0, 0], 2)
     .addLayer(L.mapbox.styleLayer('mapbox://styles/rolanfirwandy/cl5te1rwu001414p6b23wf3i4'));
