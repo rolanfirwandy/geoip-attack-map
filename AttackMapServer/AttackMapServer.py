@@ -17,7 +17,6 @@ import tornado.websocket
 from os import getuid, path
 from sys import exit
 
-
 # Look up service colors
 service_rgb = {
                 'FTP':'#ff0000',
@@ -26,7 +25,7 @@ service_rgb = {
                 'EMAIL':'#80ff00',
                 'WHOIS':'#00ff00',
                 'DNS':'#00ff80',
-                'HTTP':'#00ffff',
+                'HTTP':'#ff8800',
                 'HTTPS':'#0080ff',
                 'SQL':'#0000ff',
                 'SNMP':'#8000ff',

@@ -24,7 +24,8 @@ db = None
 geoip_url = 'http://ip-api.com/json/'
 
 # required input paths
-syslog_path = '/var/log/messages'
+#syslog_path = '/var/log/messages'
+syslog_path = '/var/log/syslog'
 db_path = '../DataServerDB/GeoLite2-City.mmdb'
 
 # stats
@@ -60,7 +61,7 @@ def connect_redis(redis_ip):
 
 def connect_mongo(mongo_url):
     client = MongoClient(mongo_url)
-    d = client['bindb'].geoipdb
+    d = client['pejaten'].geoipdb
     return d
 
 def get_msg_type():
@@ -178,19 +179,26 @@ def find_dst_lat_long(hq_ip):
     hq_ip_db_clean = db.find_one({"query": hq_ip})
     if hq_ip_db_clean:
         print('get dst data from mongo')
-        dst_lat = hq_ip_db_clean['lat']
-        dst_long = hq_ip_db_clean['lon']
-        hq_dict = {
-                'dst_lat': dst_lat,
-                'dst_long': dst_long
-                }
-        return hq_dict
+        if (hq_ip_db_clean['status']  == 'success'):
+            dst_lat = hq_ip_db_clean['lat']
+            dst_long = hq_ip_db_clean['lon']
+            hq_dict = {
+                    'dst_lat': dst_lat,
+                    'dst_long': dst_long
+                    }
+            return hq_dict
+        else:
+            hq_dict = {
+                    'dst_lat': -6.17,
+                    'dst_long': 106.8
+                    }
+            return hq_dict
     else:
         print('get dst data from api')
         resp_dst = urlopen(geoip_url + hq_ip)
         json_dst = json.load(resp_dst)
+        db.insert_one(json_dst)
         if (json_dst['status'] == 'success'):
-            db.insert_one(json_dst)
             dst_lat = str(json_dst['lat'])
             dst_long = str(json_dst['lon'])
             hq_dict = {
@@ -241,23 +249,35 @@ def main():
                     if ip_db_unclean:
                         print('get src data from mongo')
                         event_count += 1
-                        ip_db_clean = {'city': ip_db_unclean['city'],
-                                    'continent': ip_db_unclean['regionName'],
-                                    'continent_code': ip_db_unclean['region'],
-                                    'country': ip_db_unclean['country'],
-                                    'iso_code': ip_db_unclean['countryCode'],
-                                    'latitude': ip_db_unclean['lat'],
-                                    'longitude': ip_db_unclean['lon'],
-                                    'metro_code': 0,
-                                    'postal_code': ip_db_unclean['zip']
-                                    }
+                        if (ip_db_unclean['status'] == 'success'):
+                            ip_db_clean = {'city': ip_db_unclean['city'],
+                                        'continent': ip_db_unclean['regionName'],
+                                        'continent_code': ip_db_unclean['region'],
+                                        'country': ip_db_unclean['country'],
+                                        'iso_code': ip_db_unclean['countryCode'],
+                                        'latitude': ip_db_unclean['lat'],
+                                        'longitude': ip_db_unclean['lon'],
+                                        'metro_code': 0,
+                                        'postal_code': ip_db_unclean['zip']
+                                        }
+                        else:
+                            ip_db_clean = {'city': 'Jakarta',
+                                        'continent': 'Asia',
+                                        'continent_code': 'AS',
+                                        'country': 'Indonesia',
+                                        'iso_code': 'ID',
+                                        'latitude': -6.17,
+                                        'longitude': 106.8,
+                                        'metro_code': 0,
+                                        'postal_code': ""
+                                        }
                     else:
                         print('get src data from api')
                         event_count += 1
                         resp_src = urlopen(geoip_url + syslog_data_dict['src_ip'])
                         json_src = json.load(resp_src)
+                        db.insert_one(json_src)
                         if (json_src['status'] == 'success'):
-                            db.insert_one(json_src)
                             ip_db_clean = {'city': json_src['city'],
                                         'continent': json_src['regionName'],
                                         'continent_code': json_src['region'],
