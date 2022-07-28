@@ -24,12 +24,20 @@ def main():
 		resp = es.search(index=kpu_index, query={"match_all":{}}, size=4, sort={"@timestamp":{"order":"desc"}})
 		print("Got %d Hits:" % resp['hits']['total']['value'])
 		for hit in resp['hits']['hits']:
-		    kpuSourceAddress = hit['_source']['fortinet']['firewall']['srcip']
-		    kpuSourcePort = hit['_source']['fortinet']['firewall']['srcport']
-		    kpuDestinationAddress = hit['_source']['fortinet']['firewall']['dstip']
-		    kpuDestinationPort = hit['_source']['fortinet']['firewall']['dstport']
-		    kpuApplicationProtocol = hit['_source']['fortinet']['firewall']['service']
-		    kpuDestinationServiceName = hit['_source']['fortinet']['firewall']['attack']
+		    try:
+			    kpuSourceAddress = hit['_source']['fortinet']['firewall']['srcip']
+			    kpuSourcePort = hit['_source']['fortinet']['firewall']['srcport']
+			    kpuDestinationAddress = hit['_source']['fortinet']['firewall']['dstip']
+			    kpuDestinationPort = hit['_source']['fortinet']['firewall']['dstport']
+			    kpuApplicationProtocol = hit['_source']['fortinet']['firewall']['service']
+			    kpuDestinationServiceName = hit['_source']['fortinet']['firewall']['attack']
+			except KeyError:
+			    kpuSourceAddress = hit['_source']['fortinet']['firewall']['src']
+			    kpuSourcePort = hit['_source']['fortinet']['firewall']['src_port']
+			    kpuDestinationAddress = hit['_source']['fortinet']['firewall']['dst']
+			    kpuDestinationPort = hit['_source']['fortinet']['firewall']['dst_port']
+			    kpuApplicationProtocol = hit['_source']['fortinet']['firewall']['service']
+			    kpuDestinationServiceName = hit['_source']['fortinet']['firewall']['signature_cve_id']
 
 		    kpu_attack_data = '{},{},{},{},{},{}'.format(
 		                                    kpuSourceAddress,
